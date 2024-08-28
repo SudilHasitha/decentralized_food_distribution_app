@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Chat Application with Map Integration</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+</head>
+<body>
+    <h1>P2P Chat Application with Map Integration</h1>
+
+    <!-- Map container -->
+    <div id="map" style="height: 400px; width: 100%;"></div>
+
+    <div id="location-chat-rooms">
+        <!-- Chat rooms will be dynamically added here -->
+    </div>
+
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([51.505, -0.09], 13);  // Default location (London)
+        
+        // Set up the tile layer using OpenStreetMap or another provider
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Add a click event listener to the map
+        map.on('click', function(e) {
+            var latlng = e.latlng;
+            var address = prompt("Enter a chat room address for this location:");
+            if (address) {
+                // Create a new chat room for the clicked location
+                createChatRoom(latlng, address);
+            }
+        });
+
+        // Function to create a new chat room
+        function createChatRoom(latlng, address) {
+            // Send the address and location to the server to create a chat room
+            fetch('/create-room', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ lat: latlng.lat, lng: latlng.lng, address: address })
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Append the new chat room to the location-chat-rooms div
+                var roomDiv = document.createElement('div');
+                roomDiv.innerHTML = data;
+                document.getElementById('location-chat-rooms').appendChild(roomDiv);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

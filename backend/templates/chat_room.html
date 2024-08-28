@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+</head>
+<body>
+    <h1>Chat Room: {{.RoomID}}</h1>
+    <div id="messages" hx-sse="connect:/stream?room={{.RoomID}}" hx-swap="afterend">
+        <!-- Existing messages will be loaded here -->
+        {{range .Messages}}
+        <p>{{.}}</p>
+        {{end}}
+    </div>
+
+    <form hx-post="/send-message" hx-target="#messages" hx-swap="beforeend">
+        <input type="hidden" name="room_id" value="{{.RoomID}}">
+        <input type="text" name="message" placeholder="Enter message" required>
+        <button type="submit">Send</button>
+    </form>
+</body>
+</html>
