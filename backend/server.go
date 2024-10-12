@@ -1,10 +1,11 @@
 package main
 
 import (
+	"backend/handlers"
 	"log"
 	"net/http"
-	"decentralized-chat-app/backend/handlers"
-	"github.com/ipfs/go-ipfs-api" // Import IPFS Shell library
+
+	shell "github.com/ipfs/go-ipfs-api" // Import IPFS Shell library
 )
 
 var sh *shell.Shell // Initialize IPFS Shell globally
@@ -15,9 +16,11 @@ func main() {
 
 	// Register handlers
 	http.HandleFunc("/", handlers.IndexHandler)
-	http.HandleFunc("/create-room", handlers.CreateRoomHandler)
+	http.HandleFunc("/create-room", func(w http.ResponseWriter, r *http.Request) {
+		handlers.CreateLocationRoomHandler(w, r, sh)
+	})
 	http.HandleFunc("/send-message", func(w http.ResponseWriter, r *http.Request) {
-		handlers.SendMessageHandler(w, r, sh) // Pass IPFS Shell to handler
+		handlers.SendMessageHandler(w, r, sh)
 	})
 	http.HandleFunc("/create-location-room", func(w http.ResponseWriter, r *http.Request) {
 		handlers.CreateLocationRoomHandler(w, r, sh) // Pass IPFS Shell to handler

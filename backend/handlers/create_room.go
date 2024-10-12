@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"backend/utils"
 	"encoding/json"
 	"html/template"
-	"net/http"
-	"decentralized_food_distribution_app/backend/utils"
 	"log"
-	"github.com/ipfs/go-ipfs-api" // Import IPFS Shell library
+	"net/http"
+
+	shell "github.com/ipfs/go-ipfs-api" // Import IPFS Shell library
 )
 
 // CreateLocationRoomHandler handles creating chat rooms based on map location clicks

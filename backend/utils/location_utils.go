@@ -3,7 +3,9 @@ package utils
 import (
 	"fmt"
 	"log"
-	"github.com/ipfs/go-ipfs-api" // Import IPFS Shell library
+	"strings"
+
+	shell "github.com/ipfs/go-ipfs-api" // Import IPFS Shell library
 )
 
 // GenerateRoomID generates a unique room ID based on latitude and longitude
