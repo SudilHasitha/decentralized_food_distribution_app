@@ -7,39 +7,100 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        #location-chat-rooms {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
-    <h1>P2P Chat Application with Map Integration</h1>
-
-    <!-- Map container -->
-    <div id="map" style="height: 400px; width: 100%;"></div>
-
+    <div id="map"></div>
     <div id="location-chat-rooms">
+        <h2>Chat Rooms</h2>
         <!-- Chat rooms will be dynamically added here -->
     </div>
 
     <script>
-        // Initialize the map
-        var map = L.map('map').setView([51.505, -0.09], 13);  // Default location (London)
-        
-        // Set up the tile layer using OpenStreetMap or another provider
+        // Initialize the map with a default location
+        var map = L.map('map').setView([51.505, -0.09], 13);
+        var currentLocationMarker;
+
+        // Set up the tile layer using OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
 
-        // Add a click event listener to the map
-        map.on('click', function(e) {
-            var latlng = e.latlng;
-            var address = prompt("Enter a chat room address for this location:");
-            if (address) {
-                // Create a new chat room for the clicked location
-                createChatRoom(latlng, address);
+        // Function to set map view to current location and add a draggable pin
+        function setMapToCurrentLocation() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lon = position.coords.longitude;
+                    map.setView([lat, lon], 13);
+
+                    // Remove existing marker if any
+                    if (currentLocationMarker) {
+                        map.removeLayer(currentLocationMarker);
+                    }
+
+                    // Add a new draggable marker at the current location
+                    currentLocationMarker = L.marker([lat, lon], {draggable: true}).addTo(map);
+                    currentLocationMarker.bindPopup("Drag to adjust your location").openPopup();
+
+                    // Update location when marker is dragged
+                    currentLocationMarker.on('dragend', function(event) {
+                        var marker = event.target;
+                        var position = marker.getLatLng();
+                        marker.setLatLng(position, {draggable: true});
+                        map.panTo(position);
+                    });
+
+                    // Add double-click event to create chat room
+                    currentLocationMarker.on('dblclick', function(event) {
+                        var marker = event.target;
+                        var position = marker.getLatLng();
+                        createChatRoomPrompt(position);
+                    });
+                }, function(error) {
+                    console.error("Error getting location:", error);
+                });
+            } else {
+                console.log("Geolocation is not available in this browser.");
             }
-        });
+        }
+
+        // Call the function to set the map to current location
+        setMapToCurrentLocation();
+
+        // Function to prompt for chat room creation
+        function createChatRoomPrompt(latlng) {
+            var createRoom = confirm("Do you want to create a chat room at this location?");
+            if (createRoom) {
+                var address = prompt("Enter a name for this chat room:");
+                if (address) {
+                    createChatRoom(latlng, address);
+                }
+            }
+        }
 
         // Function to create a new chat room
         function createChatRoom(latlng, address) {
-            // Send the address and location to the server to create a chat room
             fetch('/create-room', {
                 method: 'POST',
                 headers: {
@@ -49,7 +110,6 @@
             })
             .then(response => response.text())
             .then(data => {
-                // Append the new chat room to the location-chat-rooms div
                 var roomDiv = document.createElement('div');
                 roomDiv.innerHTML = data;
                 document.getElementById('location-chat-rooms').appendChild(roomDiv);
